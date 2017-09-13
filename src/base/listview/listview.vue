@@ -4,13 +4,12 @@
           :listen-scroll="listenScroll"
           :probe-type="probeType"
           ref="listview"
-          class="listview"
-  >
+          class="listview" >
     <ul>
       <li v-for="group in data" class="singer-group" ref="singerGroup">
         <h3 class="singer-group-title">{{group.title}}</h3>
         <ul>
-          <li v-for="item in group.items" class="singer-group-item">
+          <li @click="selectItem(item)" v-for="item in group.items" class="singer-group-item">
             <img :src="item.avatar" class="avatar">
             <span class="name">{{item.name}}</span>
           </li>
@@ -75,6 +74,9 @@ export default {
     }
   },
   methods: {
+    selectItem(item) {
+      this.$emit('select', item)
+    },
     onSideBarTouchStart(e) {
       let anchorIndex = getData(e.target, 'index')
       let firstTouch = e.touches[0]
