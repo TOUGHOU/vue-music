@@ -10,10 +10,11 @@
     <div class="bg-layer" ref="bgLayer"></div>
     <scroll class="list" ref="list"
             @scroll="scroll"
+            :data="songs"
             :listenScroll="listenScroll"
             :probeType="probeType">
       <div class="song-list-wrapper" ref="songlist">
-        <songlist :songs="this.songs"></songlist>
+        <songlist :songs="songs"></songlist>
       </div>
     </scroll>
   </div>
@@ -64,6 +65,13 @@ export default {
     _bgLayer(y) {
       let zIndex = 0
       let translateY = Math.max(y, this.minTranslateY)
+      let scale = 1
+      let percent = Math.abs(y / this.bgHeight)
+
+      if (y > 0) {
+        zIndex = 10
+        scale = 1 + percent
+      }
       // 向上偏移
       this.$refs.bgLayer.style['transform'] = `translate3d(0, ${translateY}px, 0)`
       this.$refs.bgLayer.style['webkitTransform'] = `translate3d(0, ${translateY}px, 0)`
@@ -76,6 +84,8 @@ export default {
         this.$refs.bgImage.style.height = 0
         this.$refs.bgImage.style.paddingTop = '70%'
       }
+
+      this.$refs.bgImage.style.transform = `scale(${scale})`
       // 当到达阈值时，图片的index
       this.$refs.bgImage.style.zIndex = zIndex
     }
