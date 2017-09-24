@@ -20,7 +20,7 @@
             :listenScroll="listenScroll"
             :probeType="probeType">
       <div class="song-list-wrapper" ref="songlist">
-        <songlist :songs="songs"></songlist>
+        <songlist @select="selectItem" :songs="songs"></songlist>
       </div>
     </scroll>
   </div>
@@ -30,6 +30,7 @@
 import scroll from 'base/scroll/scroll'
 import songlist from 'base/song-list/song-list'
 import {prefixStyle} from 'common/js/dom'
+import {mapActions} from 'vuex'
 
 const transform = prefixStyle('transform')
 const TITLE_HEIGHT = 40
@@ -70,6 +71,13 @@ export default {
     scroll(scroll) {
       this.scrollY = scroll.y
     },
+    selectItem(item, index) {
+      console.log(item, index)
+      this.selectPlayer({
+        list: this.songs,
+        index: index
+      })
+    },
     _bgLayer(y) {
       let zIndex = 0
       let translateY = Math.max(y, this.minTranslateY)
@@ -97,7 +105,10 @@ export default {
       this.$refs.bgImage.style.transform = `scale(${scale})`
       // 当到达阈值时，图片的index
       this.$refs.bgImage.style.zIndex = zIndex
-    }
+    },
+    ...mapActions([
+      'selectPlayer'
+    ])
   },
   mounted() {
     this.bgHeight = this.$refs.bgImage.clientHeight
