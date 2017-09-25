@@ -22,9 +22,6 @@ export default {
       default: []
     }
   },
-  created() {
-
-  },
   methods: {
     _getSongDetails(item) {
       return `${item.singer}·${item.album}`

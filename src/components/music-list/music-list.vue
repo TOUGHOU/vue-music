@@ -72,7 +72,6 @@ export default {
       this.scrollY = scroll.y
     },
     selectItem(item, index) {
-      console.log(item, index)
       this.selectPlayer({
         list: this.songs,
         index: index
