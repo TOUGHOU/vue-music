@@ -1,6 +1,11 @@
 <template>
   <div class="player" v-show="playlist.length>0">
-  <transition name="normal">
+  <transition name="normal"
+              @enter="enter"
+              @afterenter="afterEnter"
+              @leave="leave"
+              @afterleave="afterLeave"
+  >
     <div class="normal-player" v-show="fullScreen">
       <div class="background">
         <img width="100%" height="100%" :src="currentSong.image">
@@ -15,7 +20,7 @@
       <div class="middle">
         <div class="middle-l">
           <div class="cd-wrapper">
-            <div class="cd">
+            <div class="cd" :class="cdPlay">
               <img class="image" :src="currentSong.image">
             </div>
           </div>
@@ -27,13 +32,13 @@
             <i class="icon-sequence"></i>
           </div>
           <div class="icon i-left">
-            <i class="icon-prev"></i>
+            <i class="icon-prev" @click="prevSong"></i>
           </div>
           <div class="icon i-center">
-            <i class="icon-play"></i>
+            <i :class="playIcon" @click="togglePlay"></i>
           </div>
           <div class="icon i-right">
-            <i class="icon-next"></i>
+            <i class="icon-next" @click="nextSong"></i>
           </div>
           <div class="icon i-right">
             <i class="icon-not-favorite "></i>
@@ -45,44 +50,109 @@
   <transition name="mini">
     <div class="mini-player" v-show="!fullScreen" @click="open">
         <div class="icon">
-          <img  width="40" height="40" :src="currentSong.image">
+          <img  width="40" height="40" :src="currentSong.image" :class="cdPlay">
         </div>
         <div class="text">
           <h2 class="name" v-html="currentSong.name"></h2>
           <p class="desc" v-html="currentSong.singer"></p>
         </div>
         <div class="control">
+          <i :class="iconMini" @click.stop="togglePlay"></i>
         </div>
         <div class="control">
           <i class="icon-playlist"></i>
         </div>
     </div>
   </transition>
+  <audio ref="audio" :src="currentSong.url"></audio>
   </div>
 </template>
 
 <script type="text/ecmascript-6">
 import {mapGetters, mapMutations} from 'vuex'
+// import animations from 'create-keyframe-animation'
 
 export default {
   updated() {
     console.log(this)
   },
   methods: {
+    prevSong() {
+      let index = this.currentIndex - 1
+      if (index < 0) {
+        index = this.playlist.length - 1
+      }
+      this.setCurrentIndex(index)
+      if (!this.playing) {
+        this.togglePlay()
+      }
+    },
+    nextSong() {
+      let index = this.currentIndex + 1
+      if (index === this.playlist.length) {
+        index = 0
+      }
+      this.setCurrentIndex(index)
+      if (!this.playing) {
+        this.togglePlay()
+      }
+    },
     back() {
       this.setFullScreen(false)
     },
     open() {
       this.setFullScreen(true)
     },
+    enter(el, done) {
+
+    },
+    afterEnter() {
+
+    },
+    leave() {
+
+    },
+    afterLeave() {
+
+    },
+    togglePlay() {
+      console.log(this)
+      this.setPlayingState(!this.playing)
+    },
     ...mapMutations({
-      setFullScreen: 'SET_FULL_SCREEN'
+      setFullScreen: 'SET_FULL_SCREEN',
+      setPlayingState: 'SET_PLAYING_STATE',
+      setCurrentIndex: 'SET_CURRENT_INDEX'
     })
   },
+  watch: {
+    currentSong() {
+      this.$nextTick(() => {
+        this.$refs.audio.play()
+      })
+    },
+    playing(newPlaying) {
+      const audio = this.$refs.audio
+      this.$nextTick(() => {
+        newPlaying ? audio.play() : audio.pause()
+      })
+    }
+  },
   computed: {
+    playIcon() {
+      return this.playing ? 'icon-pause' : 'icon-play'
+    },
+    iconMini() {
+      return this.playing ? 'icon-pause-mini' : 'icon-play-mini'
+    },
+    cdPlay() {
+      return this.playing ? 'play' : 'play pause'
+    },
     ...mapGetters([
       'fullScreen',
       'playlist',
+      'playing',
+      'currentIndex',
       'currentSong'
     ])
   }
@@ -163,10 +233,10 @@ export default {
               box-sizing: border-box
               border: 10px solid rgba(255, 255, 255, 0.1)
               border-radius: 50%
-              // &.play
-              //   animation: rotate 20s linear infinite
-              // &.pause
-              //   animation-play-state: paused
+              &.play
+                animation: rotate 20s linear infinite
+              &.pause
+                animation-play-state: paused
               .image
                 // position: absolute
                 // left: 0
@@ -321,4 +391,9 @@ export default {
           position: absolute
           left: 0
           top: 0
+  @keyframes rotate
+    0%
+      transform: rotate(0)
+    100%
+      transform: rotate(360deg)
 </style>
