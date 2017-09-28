@@ -27,18 +27,25 @@
         </div>
       </div>
       <div class="bottom">
+        <div class="progress-wrapper">
+          <span class="time time-l">{{formatTime(currentTime)}}</span>
+          <div class="progress-bar-wrapper">
+            <progress-bar></progress-bar>
+          </div>
+          <span class="time time-r">{{formatTime(currentSong.duration)}}</span>
+        </div>
         <div class="operators">
           <div class="icon i-left">
             <i class="icon-sequence"></i>
           </div>
-          <div class="icon i-left">
+          <div class="icon i-left" :class="disableCls">
             <i class="icon-prev" @click="prevSong"></i>
           </div>
-          <div class="icon i-center">
+          <div class="icon i-center" :class="disableCls">
             <i :class="playIcon" @click="togglePlay"></i>
           </div>
-          <div class="icon i-right">
-            <i class="icon-next" @click="nextSong"></i>
+          <div class="icon i-right" :class="disableCls">
+            <i class="icon-next"  @click="nextSong"></i>
           </div>
           <div class="icon i-right">
             <i class="icon-not-favorite "></i>
@@ -64,20 +71,82 @@
         </div>
     </div>
   </transition>
-  <audio ref="audio" :src="currentSong.url"></audio>
+  <audio ref="audio" :src="currentSong.url"
+          @canplay="ready"
+          @ended="end"
+          @timeupdate="updateTime"
+  ></audio>
   </div>
 </template>
 
 <script type="text/ecmascript-6">
 import {mapGetters, mapMutations} from 'vuex'
+import progressBar from 'base/progress-bar/progress-bar'
 // import animations from 'create-keyframe-animation'
 
 export default {
   updated() {
-    console.log(this)
+    // console.log(this)
+  },
+  data() {
+    return {
+      songsReady: false,
+      currentTime: 0
+    }
+  },
+  computed: {
+    playIcon() {
+      return this.playing ? 'icon-pause' : 'icon-play'
+    },
+    iconMini() {
+      return this.playing ? 'icon-pause-mini' : 'icon-play-mini'
+    },
+    cdPlay() {
+      return this.playing ? 'play' : 'play pause'
+    },
+    disableCls() {
+      return this.songsReady ? '' : 'disable'
+    },
+    ...mapGetters([
+      'fullScreen',
+      'playlist',
+      'playing',
+      'currentIndex',
+      'currentSong'
+    ])
   },
   methods: {
+    formatTime(time) {
+      let interval = time | 0
+      const min = interval / 60 | 0
+      const sec = this._pad(interval % 60)
+      /**
+       * 这是我写的，上面是滴滴大神写的逻辑，高下立判
+       */
+      // let min = 0
+      // let sec = 0
+      // if (time>= 60) {
+      //   min = Math.floor(time/ 60)
+      // }
+      // sec = time- min * 60
+      // if (sec === 0) {
+      //   sec = '00'
+      // } else if (sec < 10) {
+      //   sec = '0' + sec
+      // }
+      // if (min === 0) {
+      //   min = '0'
+      // }
+      return `${min}:${sec}`
+    },
+    updateTime(e) {
+      this.currentTime = Math.ceil(e.srcElement.currentTime)
+    },
     prevSong() {
+      if (!this.songsReady) {
+        return
+      }
+
       let index = this.currentIndex - 1
       if (index < 0) {
         index = this.playlist.length - 1
@@ -86,8 +155,14 @@ export default {
       if (!this.playing) {
         this.togglePlay()
       }
+
+      this.songsReady = false
     },
     nextSong() {
+      if (!this.songsReady) {
+        return
+      }
+
       let index = this.currentIndex + 1
       if (index === this.playlist.length) {
         index = 0
@@ -96,6 +171,8 @@ export default {
       if (!this.playing) {
         this.togglePlay()
       }
+
+      this.songsReady = false
     },
     back() {
       this.setFullScreen(false)
@@ -115,9 +192,30 @@ export default {
     afterLeave() {
 
     },
+    end() {
+      this.nextSong()
+    },
+    ready() {
+      this.songsReady = true
+    },
+    error() {
+
+    },
     togglePlay() {
-      console.log(this)
+      if (!this.songsReady) {
+        return
+      }
       this.setPlayingState(!this.playing)
+    },
+    _pad(s, n = 2) {
+      let len = s.toString().length
+      let num = s
+      while (len < n) {
+        num = '0' + s
+        len++
+      }
+
+      return num
     },
     ...mapMutations({
       setFullScreen: 'SET_FULL_SCREEN',
@@ -138,29 +236,15 @@ export default {
       })
     }
   },
-  computed: {
-    playIcon() {
-      return this.playing ? 'icon-pause' : 'icon-play'
-    },
-    iconMini() {
-      return this.playing ? 'icon-pause-mini' : 'icon-play-mini'
-    },
-    cdPlay() {
-      return this.playing ? 'play' : 'play pause'
-    },
-    ...mapGetters([
-      'fullScreen',
-      'playlist',
-      'playing',
-      'currentIndex',
-      'currentSong'
-    ])
+  components: {
+    progressBar
   }
 }
 </script>
 
 <style lang="stylus">
   @import "~common/stylus/variable"
+  @import "~common/stylus/mixin"
 
   .player
     .normal-player
