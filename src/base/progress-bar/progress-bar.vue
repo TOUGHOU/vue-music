@@ -1,5 +1,5 @@
 <template>
-  <div class="progress-bar" ref="progressBar" @click="progressClick">
+  <div class="progress-bar" ref="progressBar">
     <div class="bar-inner">
       <div class="progress" ref="progress"></div>
       <div class="progress-btn-wrapper" ref="progressBtn">
@@ -10,7 +10,30 @@
 </template>
 
 <script type="text/ecmascript-6">
-export default {}
+export default {
+  props: {
+    percent: {
+      type: Number,
+      default: 0
+    }
+  },
+  created() {
+    console.log(this)
+  },
+  methods: {
+    _offset(offset) {
+      this.$refs.progress.style.width = `${offset}px`
+      this.$refs.progressBtn.style['transform'] = `translate3d(${offset}px, 0, 0)`
+    }
+  },
+  watch: {
+    percent(newPercent) {
+      const baseWidth = this.$refs.progressBar.clientWidth
+      const offset = baseWidth * newPercent
+      this._offset(offset)
+    }
+  }
+}
 </script>
 
 <style lang="stylus">
