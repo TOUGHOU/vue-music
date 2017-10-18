@@ -30,7 +30,9 @@
         <div class="progress-wrapper">
           <span class="time time-l">{{formatTime(currentTime)}}</span>
           <div class="progress-bar-wrapper">
-            <progress-bar :percent="percent" @progressChange="percentChange"></progress-bar>
+            <progress-bar :percent="percent"
+                          @triggerProgressBarChange="progressBarChange">
+            </progress-bar>
           </div>
           <span class="time time-r">{{formatTime(currentSong.duration)}}</span>
         </div>
@@ -94,6 +96,9 @@ export default {
       currentTime: 0
     }
   },
+  mounted() {
+    console.log(this)
+  },
   computed: {
     playIcon() {
       return this.playing ? 'icon-pause' : 'icon-play'
@@ -119,8 +124,11 @@ export default {
     ])
   },
   methods: {
-    percentChange(percent) {
-      console.log(percent)
+    progressBarChange(percent) {
+      this.$refs.audio.currentTime = this.currentSong.duration * percent
+      // if (!this.playing) {
+      //   this.togglePlay()
+      // }
     },
     formatTime(time) {
       let interval = time | 0
@@ -146,7 +154,7 @@ export default {
       return `${min}:${sec}`
     },
     updateTime(e) {
-      this.currentTime = Math.ceil(e.srcElement.currentTime)
+      this.currentTime = e.target.currentTime
     },
     prevSong() {
       if (!this.songsReady) {
