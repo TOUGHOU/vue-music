@@ -38,7 +38,7 @@
         </div>
         <div class="operators">
           <div class="icon i-left">
-            <i class="icon-sequence"></i>
+            <i :class="modeIcon" @click="modeChange"></i>
           </div>
           <div class="icon i-left" :class="disableCls">
             <i class="icon-prev" @click="prevSong"></i>
@@ -87,6 +87,8 @@
 import {mapGetters, mapMutations} from 'vuex'
 import progressCircle from 'base/progress-circle/progress-circle'
 import progressBar from 'base/progress-bar/progress-bar'
+import {playMode} from 'common/js/config'
+import {shuffle} from 'common/js/util'
 // import animations from 'create-keyframe-animation'
 
 export default {
@@ -102,8 +104,13 @@ export default {
   },
   mounted() {
     console.log(this)
+    this.spaceControlPlay()
   },
   computed: {
+    modeIcon() {
+      const mode = this.mode % 3
+      return mode === 1 ? 'icon-loop' : mode === 2 ? 'icon-random' : 'icon-sequence'
+    },
     playIcon() {
       return this.playing ? 'icon-pause' : 'icon-play'
     },
@@ -124,10 +131,38 @@ export default {
       'playlist',
       'playing',
       'currentIndex',
-      'currentSong'
+      'currentSong',
+      'mode',
+      'sequenceList'
     ])
   },
   methods: {
+    spaceControlPlay() {
+      document.addEventListener('keyup', (e) => {
+        if (e.keyCode === 32) {
+          this.togglePlay()
+        }
+      }, false)
+    },
+    modeChange() {
+      let mode = (this.mode + 1) % 3
+      this.setPlayMode(mode)
+
+      let list = null
+      if (mode === playMode.random) {
+        list = shuffle(this.sequenceList)
+      } else {
+        list = this.sequenceList
+      }
+      this.resetCurrentIndex(list)
+      this.setPlayList(list)
+    },
+    resetCurrentIndex(list) {
+      let index = list.findIndex((item) => {
+        return item.id === this.currentSong.id
+      })
+      this.setCurrentIndex(index)
+    },
     progressBarChange(percent) {
       this.$refs.audio.currentTime = this.currentSong.duration * percent
       // if (!this.playing) {
@@ -238,11 +273,16 @@ export default {
     ...mapMutations({
       setFullScreen: 'SET_FULL_SCREEN',
       setPlayingState: 'SET_PLAYING_STATE',
-      setCurrentIndex: 'SET_CURRENT_INDEX'
+      setCurrentIndex: 'SET_CURRENT_INDEX',
+      setPlayMode: 'SET_PLAY_MODE',
+      setPlayList: 'SET_PLAYLIST'
     })
   },
   watch: {
-    currentSong() {
+    currentSong(newSong, oldSong) {
+      if (newSong === oldSong) {
+        return
+      }
       this.$nextTick(() => {
         this.$refs.audio.play()
       })
