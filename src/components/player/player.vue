@@ -227,6 +227,11 @@ export default {
 
       this.songsReady = false
     },
+    loop() {
+      this.$refs.audio.currentTime = 0
+      this.$refs.audio.play()
+      this.setPlayingState(true)
+    },
     back() {
       this.setFullScreen(false)
     },
@@ -246,6 +251,11 @@ export default {
 
     },
     end() {
+      console.log(this.mode, playMode.loop)
+      if (this.mode === playMode.loop) {
+        this.loop()
+        return
+      }
       this.nextSong()
     },
     ready() {
