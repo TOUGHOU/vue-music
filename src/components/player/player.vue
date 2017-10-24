@@ -290,6 +290,7 @@ export default {
   },
   watch: {
     currentSong(newSong, oldSong) {
+      console.log(this.currentSong.getLyric())
       if (newSong === oldSong) {
         return
       }

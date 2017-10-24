@@ -21,8 +21,17 @@ export default class Song {
 
     return new Promise((resolve, reject) => {
       getLyric(this.mid).then((res) => {
+        if (typeof res === 'string') {
+          let reg = /^\w+\(({[^()]+})\)$/
+          let matches = res.match(reg)
+          if (matches) {
+            res = JSON.parse(matches[1])
+          }
+        }
+
         if (res.retcode === ERR_OK) {
           this.lyric = Base64.decode(res.lyric)
+          console.log(this.lyric)
           resolve(this.lyric)
         } else {
           reject('no lyric')
