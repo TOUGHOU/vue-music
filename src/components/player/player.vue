@@ -25,6 +25,16 @@
             </div>
           </div>
         </div>
+        <scroll class="middle-r" ref="lyricList" :data="currentLyric && currentLyric.lines">
+          <div class="lyric-wrapper">
+            <div v-if="currentLyric">
+              <p ref="lyricLine"
+                 class="text"
+                 :class="{'current' : currentLine === index}"
+                 v-for="(line,index) in currentLyric.lines">{{line.txt}}</p>
+            </div>
+          </div>
+        </scroll>
       </div>
       <div class="bottom">
         <div class="progress-wrapper">
@@ -89,6 +99,8 @@ import progressCircle from 'base/progress-circle/progress-circle'
 import progressBar from 'base/progress-bar/progress-bar'
 import {playMode} from 'common/js/config'
 import {shuffle} from 'common/js/util'
+import Lyric from 'lyric-parser'
+import scroll from 'base/scroll/scroll'
 // import animations from 'create-keyframe-animation'
 
 export default {
@@ -99,11 +111,12 @@ export default {
     return {
       songsReady: false,
       currentTime: 0,
-      radius: 32
+      radius: 32,
+      currentLyric: null,
+      currentLine: 0
     }
   },
   mounted() {
-    console.log(this)
     this.spaceControlPlay()
   },
   computed: {
@@ -137,12 +150,52 @@ export default {
     ])
   },
   methods: {
+    getLyric() {
+      this.currentSong.getLyric().then((lyc) => {
+        this.currentLyric = new Lyric(lyc, this.lycHandle)
+
+        if (this.playing) {
+          this.currentLyric.play()
+        }
+      })
+    },
+    lycHandle(lyc) {
+      this.currentLine = lyc.lineNum
+      if (lyc.lineNum > 5) {
+        let line = this.$refs.lyricLine[lyc.lineNum - 5]
+        this.$refs.lyricList.scrollToElement(line, 1000)
+      } else {
+        this.$refs.lyricList.scrollTo(0, 0, 1000)
+      }
+    },
     spaceControlPlay() {
       document.addEventListener('keyup', (e) => {
+        if (e.keyCode === 40) {
+          this.turnDown()
+        }
+        if (e.keyCode === 38) {
+          this.turnUp()
+        }
         if (e.keyCode === 32) {
           this.togglePlay()
         }
       }, false)
+    },
+    turnDown() {
+      let volume = this.$refs.audio.volume.toFixed(1)
+      // console.log(volume)
+      if (volume <= 0) {
+        return
+      }
+      this.$refs.audio.volume -= 0.1
+    },
+    turnUp() {
+      let volume = this.$refs.audio.volume.toFixed(1)
+      // console.log(volume)
+      if (volume >= 1) {
+        return
+      }
+      this.$refs.audio.volume += 0.1
     },
     modeChange() {
       let mode = (this.mode + 1) % 3
@@ -251,7 +304,6 @@ export default {
 
     },
     end() {
-      console.log(this.mode, playMode.loop)
       if (this.mode === playMode.loop) {
         this.loop()
         return
@@ -290,12 +342,12 @@ export default {
   },
   watch: {
     currentSong(newSong, oldSong) {
-      console.log(this.currentSong.getLyric())
       if (newSong === oldSong) {
         return
       }
       this.$nextTick(() => {
         this.$refs.audio.play()
+        this.getLyric()
       })
     },
     playing(newPlaying) {
@@ -307,7 +359,8 @@ export default {
   },
   components: {
     progressBar,
-    progressCircle
+    progressCircle,
+    scroll
   }
 }
 </script>
